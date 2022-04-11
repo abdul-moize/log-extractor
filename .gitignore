@@ -1,0 +1,5 @@
+logs.docx
+package-lock.json
+/project-logs/*
+/node_modules/*
+DS_Store

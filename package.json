@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "docx": "^7.3.0"
+  },
+  "scripts": {
+    "devStart": "nodemon log-extractor.js",
+    "extract-logs": "node log-extractor.js"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
