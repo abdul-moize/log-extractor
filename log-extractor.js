@@ -65,23 +65,24 @@ const bulletParagraph = (text) =>
     },
   });
 
-const children = [];
+  
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
 
-const months = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
+const dayData = {};
+  
 const getFormattedDate = (date) =>
   new Date(date.split(',')[0]).toLocaleDateString('pk', {
     month: 'long',
@@ -92,10 +93,7 @@ const getFormattedDate = (date) =>
 const getFormattedDescriptions = (description) =>
   description
     .slice(0, description.lastIndexOf('('))
-    .replaceAll('[Coding] - ', '')
-    .replaceAll('[Meeting] - ', '')
-    .replaceAll('[Reporting/Analysis] - ', '')
-    .replaceAll('[Training/Learning] - ', '')
+    .replaceAll(/\[.*\] - /g, '')
     .split('.');
 
 logsFileNames.sort((m1, m2) => {
@@ -104,10 +102,14 @@ logsFileNames.sort((m1, m2) => {
 
   return months.indexOf(month1) > months.indexOf(month2) ? 1 : -1;
 });
+
 logsFileNames.forEach((fileName, index) => {
   let data = fs.readFileSync(`${initialPath}${fileName}`, 'ascii');
   data = data.split('\n"');
+
+  // replace with your team name as shown in logs.csv
   const teamNames = ['BVS - Deets - Frontend', 'H-Track - Frontend'];
+
   data.forEach((entry) => {
     const entryData = entry.split(',"');
 
@@ -117,19 +119,30 @@ logsFileNames.forEach((fileName, index) => {
       .filter((field, index) => indexesToFilter.includes(index))
       .map((field) => field.replaceAll('"', ''));
 
+    const parsedDate = date.split(',')[0];
+    
     if (teamNames.includes(team)) {
       const formattedDate = getFormattedDate(date);
 
-      children.push(dateParagraph(formattedDate), nameParagraph(name));
+      if (!dayData[parsedDate]) {
+        dayData[parsedDate] = [];
+        dayData[parsedDate].push(dateParagraph(formattedDate));
+      }
+
+      dayData[parsedDate].push(nameParagraph(name));
+
 
       descriptions.split('\n').forEach((description) => {
         getFormattedDescriptions(description).forEach(
-          (entry) =>
-            entry.trim() && children.push(bulletParagraph(entry.trim()))
+          (entry) => {
+            if (!entry.trim()) return;
+
+            dayData[parsedDate].push(bulletParagraph(entry.trim()));
+          }
         );
       });
 
-      children.push(...['', '', ''].map(dateParagraph));
+      dayData[parsedDate].push(...['', '', ''].map(dateParagraph));
     }
   });
 
@@ -138,7 +151,7 @@ logsFileNames.forEach((fileName, index) => {
       sections: [
         {
           properties: {},
-          children,
+          children: Object.values(dayData).reduce((acc, data) => [...acc, ...data], []),
         },
       ],
     });
